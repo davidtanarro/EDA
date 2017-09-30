@@ -1,0 +1,153 @@
+1)	Cuando n <= 3 es mas eficiente el algorito B, al ser de O(n^4)
+	Cuando n >= 3 es mas eficiente el algorito A, al ser de O(n^2)
+	
+2)
+	1. O(n*log n) < O(n*raiz(n))			fi(n*log n) < fi(n*raiz(n))
+	2. O((n+1)^2) == O((n-1)^2)				fi((n+1)^2) == fi((n-1)^2)
+	3. O((n + 1)!) > O(n!)					fi((n + 1)!) > fi(n!)
+	4. O(n^a) < O(a^n), con a € R y a > 1	fi(n^a) < fi(a^n), con a € R y a > 1
+	
+3)
+	Se ejecuta: n*(n+1)/2 = (n^2 + n)/2
+	Si A € O(n), entonces la complejidad asintótica del algoritmo 0(n^2)
+	
+	Ejemplo: 	1
+				1 2
+				1 2 3
+				1 2 3 4
+				1 2 3 4 5
+				...
+
+4)	Solucion correcta:
+	1 - b = (#u : 0 <= u < n : v[u] = u * 3) = 1
+	2 - max u, w : 0 <= u < w < n  ^  v[u] != v[w] : v[u] + v[w]
+	Ampliacion de solucion:
+	1 -	bool tripleIndice (int v[], int n) {
+			bool encontrado = false;
+			int i = 0;
+			while (!encontrado && i < n) {
+				if (v[i] == i*3)
+					encontrado = true;
+				else
+					i++;
+			}
+			
+			return encontrado;
+		}
+	
+	2 -	int mayorValor (int v[], int n) {
+			int s = 0;
+			
+			for (int i = 0; i < n-1; i++)					// Cuidado con salirse del array
+				for (int j = i+1; j < n; j++)				// Comienza en el siguiente elemento para no repetir iteraciones ya comprobadas
+					if ((s < v[i]+v[j]) && (v[i] != v[j]))	// La suma de los dos elementos tiene que ser mayor que la suma acumulada y no valdria si ambos elementos fueran iguales
+						s = v[i] + v[j];
+			
+			return s;
+		}
+
+5)
+	Coste del algoritmo iterativo dado un vector montaña: O(n^2)
+	Razon: Dentro el bucle while (en el peor caso es lineal) se encuetra un recorrido lineal del array en las llamadas sube y baja
+	// P: n >= 0
+	bool montaña(int v[], int n) {
+		bool existe = false;
+		int i = 0;
+		
+		// I: existe = Existe w : 0 <= w < i : sube(v, 0, w) && baja(v, w, i)
+		while (i < n && !existe) {
+			if (sube(v, 0, i) && baja(v, i, n))
+				existe = true;
+			else
+				i++;
+		}
+		return existe;
+	}
+	// Q: existe = Existe w : 0 <= w < n : sube(v, 0, w) && baja(v, w, n)
+
+	// P: 0 <= s < t <= n
+	bool sube(int v[], int s, int t) {
+		bool sube = true;
+
+		// I: sube = !(Existe w : s <= w < j : v[w] >= v[w + 1])
+		for (int j = s; j < t; j++)
+			if (v[j] >= v[j + 1])
+				sube = false;
+
+		return sube;
+	}
+	// Q: sube = !(Existe w : s <= w < t : v[w] >= v[w + 1])
+
+	// P: 0 <= s < t <= n
+	bool baja(int v[], int s, int t) {
+		bool baja = true;
+
+		// I: baja = !(Existe w : s <= w < j : v[w] <= v[w + 1])
+		for (int j = s; j < t; j++)
+			if (v[j] <= v[j + 1])
+				baja = false;
+
+		return baja;
+	}
+	// Q: baja = !(Existe w : s <= w < t : v[w] <= v[w + 1])
+	
+6)
+	Coste del algoritmo recursivo dado un vector con algun elemento igual al valor de su indice: O(log n)
+	Razon: Es una busqueda binaria recursiva
+	
+	#include <iostream>
+
+	using namespace std;
+
+	const int TAM = 50;
+
+	bool valorIndice(int v[], int ini, int fin);
+
+	int main(){
+		int numCasos, numDatos, p = -1;
+		int v[TAM];
+		bool existe;
+
+		cout << "Numero de casos: ";
+		cin >> numCasos;
+		for (int i = 0; i < numCasos; i++) {
+			existe = false;
+			cout << "  Numero de datos: ";
+			cin >> numDatos;
+			for (int j = 0; j < numDatos; j++)
+				cin >> v[j];
+			existe = valorIndice(v, 0, numDatos-1);
+			if (existe)
+				cout << "Si" << endl;
+			else
+				cout << "No" << endl;
+		}
+
+		return 0;
+	}
+
+	// P: n >= 0 ^ (ParaTodo i : 0 <= i < n : v[i] < v[i+1])
+	bool valorIndice(int v[], int ini, int fin) {
+		bool ok;
+		int mitad = (ini + fin) / 2;
+		
+		if (ini > fin || fin < ini)
+			ok = false;
+		else if (v[mitad] == mitad) {
+			cout << "Ini: " << ini << " | Mitad: " << mitad << " | Fin: " << fin << endl;
+			ok = true;
+		}
+		else {
+			cout << "Ini: " << ini << " | Mitad: " << mitad << " | Fin: " << fin << endl;
+			if (!valorIndice(v, ini, mitad - 1))
+				if (!valorIndice(v, mitad + 1, fin))
+					ok = false;
+				else
+					ok = true;
+			else
+				ok = true;
+		}
+
+		return ok;
+	}
+	// Q: ok = (Existe w : 0 <= w <= n : v[w] == w)

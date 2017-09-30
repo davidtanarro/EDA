@@ -1,0 +1,170 @@
+1.
+P ::= n = long(v)
+Q ::= suma = Sum u, w : 0 <= u < w < n : v[u]*v[w]
+
+La observación clave es que, con [1, 3, 5, 7]
+sumaProd([1, 3, 5, 7]) 
+  = 1*3 + 1*5 + 1*7 + 3*5 + 3*7 + 5*7
+  = 1*(3+5+7) + 3*(5+7) + 5*(7)
+  = (7)*5 + (7+5)*3 + (7+5+3)*1
+ó, empezando a sumar por el otro lado, y con el mismo resultado
+  = (0)*1 + (1)*3 + (1+3)*5 + (1+3+5)*7
+
+int sumaProd(int v[], int n) {
+  int suma = 0;
+  int acumulado = 0; 
+  for (int i=0; i<n; i++) {
+    suma += acumulado * v[i];
+    acumulado += v[i];
+  }
+  return suma;
+}
+
+De esta forma, 
+Pb ::= n = long(v) y
+       suma = 0 y
+       acumulado = 0 y
+       i = 0
+I  ::= suma = Sum u, w : 0 <= u < w < i : v[u] * v[w] y
+       acumulado = Sum z : 0 <= z < i : v[z]
+
+Ahora podemos verificar que
+1. Pb => I 
+  -- ya que la suma de 0 elementos es 0
+2. {I y B} A {I} 
+  -- ya que, si la suma y el producto son correctos antes de una iteración
+  volverán a serlo a la siguiente iteración (ver observación al comienzo del enunciado
+3. {I y no-B} => Q
+  -- ya que, cada vez que se finaliza una iteración, la suma es correcta; y en concreto, 
+  tras la última iteración, la suma es correcta para todo el vector original, que es lo 
+  que pide Q
+4. {I y B} => C >= 0
+  -- usamos como cota n-i; n-i es >= 0 cuando empieza el bucle (ya que n >= 0, e i == 0)
+5. {I y B y C=k} A {C<k}
+  -- ya que n-i se hace más pequeño en cada iteración, porque i va creciendo
+  
+
+
+2. 
+Empezaré por una versión iterativa (que no se pide):
+
+int espejo(int n) {
+  int m = 0;
+  while (n) {
+    m += m*10 + n%10; // coloco el nuevo dígito a la izquierda de los anteriores
+    n /= 10;          // el último dígito ya está en m; divido por 10 para descartarlo
+  }
+  return m;
+}
+
+Ahora lo pasamos a recursivo-final:
+
+void _espejo2(int n, int &m) {
+  if (n) {
+    m += m*10 + n%10;
+    n /= 10;
+    _espejo2(n, m);   // <-- no hay funcion de combinacion
+  }
+}
+int espejo2(int n) {
+  int m = 0;
+  _espejo2(n, m);
+  return m;
+}
+
+Ésta otra versión es recursiva no-final:
+
+int _espejo3(int n, int &p) {      // p contiene 10^número de llamadas que han vuelto
+  if (n) {
+    int m = _espejo3(n/10, p);     // espejo de los primeros digitos
+    int r = (n%10)*p +  m;         // coloco el ultimo al principio (f. combinación)
+    p *= 10;
+    return r;
+  }
+  return n;                        // caso base: n == 0
+}
+int espejo3(int n) {
+  int p=1;
+  return _espejo3(n, p);
+}
+
+
+
+3. 
+Lista de n productos, p[] son precios, q[] son proteinas, c[] son calorías
+
+Consideramos:
+
+struct Sol {
+  int v[MAX_N]; // productos elegidos
+  int k;        // número de elegidos
+  int precio;   // precio total de elegidos
+  int prot;     // proteínas totales de elegidos;
+  int cal;      // calorías totales de elegidos
+  
+  bool usados[MAX_N]; // inicialmente todos a false; 
+                      // si usado[i], entonces no se puede volver a usar
+  
+  void pon(int i, int p[], int q[], int c[]) { 
+    v[k++] = i;
+    precio += p[i]; prot += q[i]; cal += c[i]; 
+  }
+  void quita(int i, int p[], int q[], int c[]) {
+    k--;
+    precio -= p[i]; prot -= q[i]; cal -= c[i];
+  }
+  bool esMejorQue(Sol &otra) {
+    return cal < otra.cal;  // menos calorias es mejor, segun este enunciado
+  }
+  bool esSolParcial(int maxPrecio) {
+    if (usados[v[k-1]]) return false;
+    return precio <= maxPrecio;
+  }
+  bool esSolucion(int minProt) {
+    return prot >= minProt;
+  }
+}
+
+void mejorCesta(Sol actual, Sol &mejor, int maxPrecio, int minProt,
+    int p[], int q[], int c[], int n) {
+  for (int i=0; i<n; i++) {
+    actual.pon(i, p, q, c);
+    if (actual.esSolParcial(maxPrecio)) {
+      actual.usados[i] = true;
+      if (actual.esSolucion(minProt)) {
+        if (actual.esMejorQue(mejor)) {
+          mejor = actual;
+        }
+      } else {
+        mejorCesta(actual, mejor, maxPrecio, minProt, p, q, c, n);
+      }
+      actual.usados[i] = false;
+    }
+    actual.quita(i, p, q, c);
+  }
+}
+
+Es posible hacer podas usando una función "esSolParcial" más sofisticada:
+
+struct Sol { 
+  ...
+  bool esSolParcial(int maxPrecio, Sol &mejor) {
+    if (usados[v[k-1]]) return false;
+    return precio <= maxPrecio &&
+        cal < mejor.cal; // si llevamos ya más calorías gastadas que la solución mejor, 
+  }                      // nunca podremos superarla. Mejor no seguir por aquí
+  ...
+}
+
+O, aún más sofisticado,
+
+struct Sol { 
+  ...
+  bool esSolParcial(int maxPrecio, Sol &mejor, int p[], int n) {
+    if (usados[v[k-1]]) return false;
+    return precio <= maxPrecio &&
+        cal < mejor.cal &&
+        quedaSuficientePresupuestoParaLlegarAlMinDeProteinas(p, n);
+  }
+  ...
+}

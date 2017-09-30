@@ -1,0 +1,79 @@
+1) la complejidad es O(2n) = O(n) ya que recorremos dos veces el vector (los bucles no estan anidados por lo que es lineal)
+
+const int TAM = 10;
+
+// P: 0 <= n
+int sumProductos (int v[], int n) {
+	int sumVector = 0;
+	int sum = 0;
+	
+	// I: (sumVector = Sum r : 0 <= r < n : v[r]) ^ (sum = 0)
+	for (int i = 0; i < n; i++)
+		sumVector += v[i];
+	
+	// I: (sumVector = Sum r : 0 <= r < n : -v[r]) ^ (sum = Sum p : 0 <= p < n : v[p]*sumVector)
+	for (int i = 0; i < n; i++) {
+		sumVector -= v[i];
+		sum += sumVector * v[i];
+	}
+	
+	return sum;
+}
+// Q: sum = (Sum w : 0 <= w < n : v[w] * (Sum u : 0 <= u < w : v[u]))
+
+
+
+2)
+Coste algoritmo: O(n) en todos
+
+// ITERATIVO
+int inverso (int n) {
+	int inv = 0;
+	
+	while(n != 0) {
+		inv = inv * 10 + n%10;
+		n = n / 10;
+	}
+
+	return inv;
+}
+
+
+
+// RECURSIVO FINAL
+void f_inverso (int n, int &inv) {
+	if (n != 0) {
+		inv = inv * 10 + n%10;
+		n = n / 10;
+		f_inverso(n, inv);
+	}
+}
+int inverso(int n) {
+	int inv = 0;
+	f_inverso(n, inv);
+	return inv;
+}
+
+
+
+// RECURSIVO NO FINAL - MAL (solo saca los dos primeros digitos invertidos aunque se recorre la secuencia de forma invertida)
+int f_inverso(int n, int &inv) {
+	int ultimoDig = n % 10;
+
+	if (n != 0) {
+		inv = f_inverso(n / 10, inv) + ultimoDig * 10;
+	}
+
+	return ultimoDig;
+}
+int inverso(int n) {
+	int inv = 0;
+	f_inverso(n, inv);
+	return inv;
+}
+
+
+
+
+3) ...
+

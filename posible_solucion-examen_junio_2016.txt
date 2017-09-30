@@ -1,0 +1,269 @@
+===
+
+1. (3 puntos) Dados dos arrays v y w ordenados ...
+
+P: n/2 <= m <= n && ord(v, n) && ord(v, m)
+   con ord(a, n) ::= ParaTodo i, j : 0<=i<j<n : v[i] < v[j]
+Q: b = ParaTodo i : 0 <= i < n : (Existe j : 0 <= j < m : v[i] == w[j])
+
+bool todosEn(int *v, int n, int *w, int m) {
+    int x=0, y=0;
+    bool b=true;
+    while (x<n && y<m && b) {
+        int c = v[x] - w[y];
+        if (c == 0) {
+            x++; y++;
+        } else if (c < 0) {
+            x++;
+        } else {
+            b = false;
+        }
+    }
+    return b && y == m;
+}
+
+I: b = ParaTodo i : 0 <= i < x <= n : (Existe j : 0 <= j < y <= m : v[i] == w[j])
+
+Coste: O(n + m), lineal; como n/2 <= m <= n, se puede abreviar a O(n)
+
+Algunos fallos frecuentes:
+- soluciones poco eficientes
+	- doble bucle cuadrático, en lugar de lineal 
+		=> muy ineficiente
+	- doble bucle, pero con bucle interno usando búsqueda binaria: O (n log n) 
+		=> complicado, pero mejor que cuadrático
+- soluciones erróneas
+	- no basta con que 'b' sea cierto; 
+	  además, tienes que haber encontrado todos los elementos de 'w' (condición y == m)
+- dar mal la postcondición, envenenando cualquier invariante
+	- postcondición de "los dos vectores son iguales en todas partes"
+	  b = ParaTodo i,j : 0 <= i < n && 0 <= j < m : v[i] = v[m] 
+	  (sólo se cumple si todo-ceros o similar)
+- dar mal la invariante, por culpa de
+    - repetir la postcondición tal cual y llamarla "invariante"
+		=> si Q se cumpliese antes de entrar el bucle, ¡no haría falta el bucle!
+	- uso de variables del código en los cuantificadores Existe, ParaTodo:
+	  si escribo mi código con i y j en lugar de x e y, no hay forma de distinguir qué son
+      matemáticas de qué son variables del código
+	  // esto es Q con otras variables, 
+	  I: b = ParaTodo x : 0 <= x <= n : (Existe y : 0 <= y <= m : v[x] == w[y]) // MAL
+    - no mencionar las variables del código del bucle en la invariante 
+      (si no mencionas una variable del bucle en la invariante, o bien está mal la invariante, o 
+      la variable sobraba en el bucle...)
+===
+
+2. (2 puntos) En un vector se tienen guardados n = 2 términos de una progresión aritmética
+
+int falta(int *v, int n, int d) {
+    int i = 0;
+    int f = n-1;
+    while (i+1 < f) {
+        int m = (i+f)/2;
+        int e = v[0] + (m-1) * d;
+        if (v[m] > e) {
+            f = m;
+        } else {
+            i = m;
+        }
+    }
+    return f;
+}
+
+Coste: logarítmico en n
+
+===
+
+3. (2 puntos) La compañía que gestiona la cuenca hidrográfica
+
+int tramos(const Arbin<int> &a) {
+    int total = 0;
+    int flujo = caudal(a, total);
+	if (flujo >= 3) total --; // cascada en la raiz; la raiz no es navegable
+    return total;
+}
+
+int caudal(const Arbin<int> &a, int &total) {
+    if (a.esVacio()) {
+        // vacio
+        return 0;
+    } else if (a.hijoIz().esVacio() && b.hijoDr().esVacio()) {
+        // hoja
+        return 1;
+    } else {
+        // embalse o confluencia
+        int c = a.esVacio() 
+            + caudal(a.hijoIz(), total) 
+            + caudal(a.hijoDr(), total);
+        if (c >= 3) total ++;
+        return c; // o incluso (c<0 ? 0 : c), por si las moscas
+    }
+}
+
+Algunos fallos frecuentes:
+- hay que pasar dos piezas de información "hacia arriba": flujo y total
+  por tanto, estas funciones no pueden funcionar:
+	- void caudal(const Arbin<int> &a, int &total, int flujo) // no pasa flujo hacia arriba
+	- int caudal(const Arbin<int> &a, int total) // no pasa total hacia arriba
+- hay que evitar que la información baje hacia las hojas; por tanto, esto es peligroso:
+	void caudal(const Arbin<int> &a, int &total, int &flujo) {
+		// ...
+		} else if (a.hijoIz().esVacio() && b.hijoDr().esVacio()) {
+        	flujo ++; // peligroso, a no ser que se llame siempre con un flujo de 0
+	    } else { // ...
+	}
+- si algo esVacio(), no se puede sacar su raiz(), ni su hijoIz() ni su hijoDr().
+- no es lo mismo a.esVacio() que a == NULL ó a.raiz() == NULL; sólo lo el esVacio() funciona
+
+===
+
+4. (2 puntos) Los ingenieros de la empresa Apel
+
+struct TCancion{
+    string artista;
+    int duracion;
+    bool lista; //indica si esta en la lista de reproduccion
+    bool reproducida; //indica si esta en la lista de reproducidas
+}
+class iPud{
+    public:
+        ... las operaciones pedidas...
+        create:
+        addSong(S,A,D): añade al sistema
+        addToPlayQueue(S): añade a la lista
+        deleteSong(S): elimina todo rastro
+        play(): reproduce via lista
+        current(): devuelve cabeza lista
+        totalTime(): devuelve total
+        recent(N): devuelve n ultimas
+    private:
+        HashMap<string, TCancion> canciones;
+        List<string> lista; //la lista de reproduccion, sin repeticiones      
+        List<string> reproducidas; //las ya reproducidas, sin repeticiones 
+        int duracion; //de la lista de reproduccion
+}
+
+4.1 : costes
+        create: O(1)
+        addSong(IP,S,A,D): O(1)
+
+		// coste de eliminar duplicados de 'lista'
+        addToPlayQueue(IP,S): O(|lista|)	
+
+		// dos busquedas lineales
+        deleteSong(IP,S): O(|lista| + |reproducidas|)
+
+		// una busqueda lineal
+        play(IP): O(|reproducidas|)
+
+        current(IP): O(1)
+        totalTime(IP): O(1)
+
+		// siempre al menos lineal, porque devolver N cosas cuesta al menos N
+        recent(IP,N): O(|n|)
+        
+    void play() {
+        if (lista.vacia()) return;
+        TCancion primera = lista.front();
+
+		// actualiza contabilidad
+        canciones[primera].lista = false;
+        canciones[primera].reproducida = true;
+        duracion -= primera.duracion;
+
+        // elimina de lista, añade a reproducidas evitando duplicados
+        lista.pop_front();
+		List<string>::Iterator ri=reproducidas.begin();
+		for (/**/; ri!=reproducidas.en; ri++) { // busqueda lineal
+            if (*ri == primera) { 
+				reproducidas.elimina(ri); 
+				break;
+			}
+		}
+        reproducidas.push_front(primera);
+    }
+        
+4.2 : mejorar representacion
+    
+Opción 1: (constante, usando iteradores)
+	en cancion,
+		Iterator<string> posReproduccion
+		Iterator<string> posLista
+	esto permite eliminar de listas en O(1)
+
+Opción 2: (no constante, pero sí logarítmica)
+
+	cambiar listas a treemaps, 
+	con el 'int' apuntado en cancion.idReproduccion y cancion.idLista
+		TreeMap<int, string> lista;
+		TreeMap<int, string> reproducidas;
+		int ultimoId;
+	y en cancion,
+		int idReproduccion;
+		int idLista;
+
+Opción 3: (O(|deletes|), y por tanto constante si hay pocos de ésos)
+
+	igual que la 2, pero usando HashMap<int, string> y manteniendo un
+		int primerId;
+		que contiene el primer id en el que empezar a buscar el comienzo de las "listas",
+        ya que los hashmaps no están ordenados.	
+===
+
+5. (1 punto) Responde a las siguientes cuestiones (0.2 puntos cada una):
+        
+5.1: d) no es posible borrar elemento final, 
+	ya que aunque encontrarlo es O(1), 
+	para encontrar el *anterior al final* y restaurar el puntero al nuevo-último
+    hay que iterar toda la estructura.
+
+5.2: cuadrático, y n log n, respectivamente. 
+	 a) cuadrático ya que, si el vector está ordenado en sentido creciente ó decreciente, 
+	    el árbol tendrá sólo una rama, y será en realidad una lista donde cada inserción cueste O(n)
+        n inserciones de O(n) + recorrido de O(n) = O(n*n)
+     b) si el árbol está balanceado, cada inserción es O(log n), con lo cual 
+        n inserciones de O(log n) + recorrido de O(n) = O(n log n)
+
+5.3: a) SI, porque en preorden, siguiendo el algoritmo de construcción visto en clase, 
+        una misma secuencia de entrada genera siempre el mismo árbol binario de búsqueda
+     b) NO, porque en inorden todos los árboles con los mismos elementos son iguales
+     c) SI, porque por niveles, cada nuevo entero que entra sólo puede ir en una posición
+        del árbol en-construcción
+  => d) SI, porque hemos visto que a) y c) son ciertas
+     e) NO (ya que a) y c) son ciertas)
+
+5.4: 1) en el caso peor, la función de hash manda todo a la misma lista enlazada,
+		y recorrerla para evitar duplicados lleva a coste lineal
+     3) en el caso promedio, la función de hash mantiene las listas enlazadas balanceadas
+        (según el factor de carga), y recorrer listas con un número constante-en-promedio
+        de elementos es O(1)
+     => a), ya que 1 y 3 son verdaderas. 
+
+5.5: con 5 elementos, empezamos con las siguientes listas enlazadas vacías:
+	[0]
+	[1]
+	[2]
+	[3]
+	[4]
+    tras 4 inserciones (usando (2*k % 5) para calcular índice de lista) estamos en 
+	[0] - <10,b> - <5,d>
+	[1] 
+	[2]
+	[3] 
+	[4] - <7,a> - <2,c>
+    con un factor de carga del 80% (4/5)
+    y tras para insertar el último se duplica el tamaño 
+    y se reinsertan todos usando (2*k % 10), obteniendo un factor de carga del 50% (5/10)
+	[0] - <10,b> - <5,d>
+	[1] 
+	[2]
+	[3] 
+	[4] - <7,a> - <2,c>
+	[5] 
+	[6] 
+	[7]
+	[8] - <4,e>
+	[9] 
+    como función de hash, 2*k no está distribuyendo bien las claves. Usar 'k' a secas, por ejemplo,
+    habría dado mucho mejor resultado.
+
+5.5: **ese constructor no existe**. As

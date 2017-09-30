@@ -1,0 +1,29 @@
+void colocaUltimoAntesDe(Nodo *a, Nodo *b) {
+	Nodo *ap = a->_ant, *bp = b->_ant;
+	if (a == _prim) {
+	    _prim = b;
+	    b->_ant = NULL;
+	} else {
+	    b->_ant = ap;
+	    ap->_sig = b;
+	}
+	b->_sig = a;
+	a->_ant = b;
+	_ult = bp;
+	bp->_sig = NULL;
+}
+
+void dobla() {
+	// listas de < 2 elementos: no hay que hacer nada
+	if ( ! _prim || _ult == _prim) return;	
+
+	Nodo *a = _prim, *b = _ult;
+	while (a != b && a != b->_ant) {
+		Nodo *an = a->_sig;
+		Nodo *bp = b->_ant;
+		colocaUltimoAntesDe(a, b);
+		a = an;
+		b = bp;
+	}
+	if (a != b) colocaUltimoAntesDe(a, b);
+}

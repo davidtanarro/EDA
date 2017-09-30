@@ -1,0 +1,152 @@
+#include <iostream>
+
+using namespace std;
+
+/*
+ * 1. Escribir invariantes:
+ * 
+ * I1 ::= { p = sum( i, j : k<=i<j<n : v[i]*v[j] ) y s = sum(i : k<=i<n : v[i]) y 0<=k<=n }
+ * I2 ::= { p = sum( i, j : 0<=i<j<k : v[i]*v[j] ) y s = sum(i : 0<=i<k : v[i]) y 0<=k<=n }
+ */
+
+int sp1(int v[], int n) {
+	int k=n, p=0, s=0;
+	while (k>0) {
+		p += v[k-1]*s;
+		s += v[k-1];
+		k--;
+	}
+	return p;
+}
+
+int sp2(int v[], int n) {
+	int k=0, p=0, s=0;
+	while (k<n) {
+		p += v[k]*s;
+		s += v[k];
+		k++;
+	}
+	return p;
+}
+
+/*
+ * 2. Mostrar todos los subconjuntos con r o más actividades que no solapen entre sí
+ */
+
+struct Actividad {
+	int ini;
+	int fin;
+	Actividad(int i, int f) : ini(i), fin(f) {}
+};
+
+void _muestraSubs(Actividad *as, int na, int r, bool *bs, int pos, int prev) {
+	if (pos == na || na-pos < r) {
+		// ya hemos tomado todas las decisiones - a ver que nos ha quedado...
+		if (r <= 0) {
+			for (int i=0; i<na; i++) if (bs[i]) cout << i << " ";
+			cout << endl;
+		}
+		return;
+	}
+	
+	if (prev == -1 || as[pos].ini >= as[prev].fin) {
+		// es compatible - la incluimos a ver que pasa
+		bs[pos] = true;
+		_muestraSubs(as, na, r-1, bs, pos+1, pos);
+	} 
+	{
+		// siempre es posible no hacer una actividad
+		bs[pos] = false;
+		_muestraSubs(as, na, r, bs, pos+1, prev);
+	}
+}
+
+void muestraSubs(Actividad *as, int na, int r) {
+	bool *bs = new bool[na](); // inicializado a false gracias al ()
+	_muestraSubs(as, na, r, bs, 0, -1);
+	delete[] bs;
+}
+
+void testEj2() {
+	Actividad as[] = {
+		Actividad(0, 4),  Actividad(2, 3), Actividad(3, 5), 
+		Actividad(5, 10), Actividad(6, 8), Actividad(8, 14)
+	};
+	muestraSubs(as, 6, 2);
+}
+
+/*
+ * 3. La falda binaria de la montaña
+ */
+void tiempoAyuda(const Arbin<char> &a, int prof, int &total) {
+	if (a.esVacio()) return;
+	if (a.raiz() == 'X') total += prof*2;
+	tiempoAyuda(a.hijoIz(), prof+1, total);
+	tiempoAyuda(a.hijoDr(), prof+1, total);
+}
+
+int tiempoAyuda(const Arbin<char> &a) {
+	if (a.esVacio()) return 0;
+	int total = 0;
+	return _tiempoAyuda(a, 0, total);
+}
+
+/*
+ * 4. Faltas
+ */
+
+class Faltas {
+public : 
+	void anadirAlumno(const IdAlumno& a);
+	// incorpora al alumno en todas las asignaturas que haya con 0 faltas
+	void anadirFalta(const IdAlumno& a,const IdAsignatura& s);
+	// incrementa en 1 las faltas del alumno en la asignatura
+	void anadirAsignatura(const IdAsignatura& s); 
+	// incorpora todos los alumnos que ya esten presentes
+	// en las otras asignaturas con 0 faltas
+	
+	List<IdAlumno> noFaltas() const; // en orden alfabetico
+	int totalFaltas(const IdAlumno& a) const;
+	
+	//...otros metodos...
+private:
+	Diccionario<IdAsignatura,Diccionario<IdAlumno,int> > listas_faltas;
+}
+
+Apartado 1:
+
+	Teniendo en cuenta que me solicitan la lista de alumnos en orden, eligiría
+
+	HashMap<IdAsignatura, TreeMap<IdAlumno, int> > lista_faltas;
+
+	Esto me daría 
+		anadirAlumno : O(asignaturas * log (alumnos))
+		anadirFalta  : O(log (alumnos))
+		anadirAsignatura : O( alumnos )
+		
+	Y requiere que las asignaturas sean hasheables y los alumnos ordenables.
+	
+Apartado 2:
+	
+	int totalFaltas(const IdAlumno& a) const {
+		for cada asignatura, 
+			sumo las faltas del alumno en la misma;
+		devuelvo la suma;
+	}
+	// coste: O(asignaturas * log (alumnos))
+
+	List<IdAlumno> noFaltas() const {
+		for cada alumno,
+			for cada asignatura
+				si ha faltado, break
+			si llega sin faltas, al saco
+		return el saco
+	}
+
+	// coste: O(asignaturas * alumnos) en el caso peor
+
+Apartado 3:
+
+	un TreeMap<IdAlumno, int> faltasPorAlumno; // reduciría noFaltas a O(alumnos), y totalFaltas a O(log(alumnos))
+	un TreeMap<IdAlumno, Nada> empollones;     // permitiría usar un HashMap para totalFaltas, y daría noFaltas en O(no-faltan)
+	

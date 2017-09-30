@@ -1,0 +1,57 @@
+1)	Coste de la funcion = O(n)
+
+// P: 0 <= m <= n ^ s = Suma w : 0 <= w < m : v[w]
+int maxSumElem (int v[], int n, int m, int s) {
+	int max = s;
+	int sumParcial = s;
+	
+	// I: (max = max u : m <= u < i : (Suma w : u <= w < u+m : v[w])) ^ sumParcial = (Suma z : i-m <= z < i : v[z])
+	for (int i = m; i < n; i++) {
+		sumParcial = sumParcial + v[i] - v[i-m];
+		if (sumParcial > max)
+			max = sumParcial;
+	}
+	
+	return max;
+}
+// Q: max = max u : m <= u < n : (Suma w : u <= w < u+m : v[w])
+
+
+
+
+2) Orden de complejidad: O(n) en el caso peor (que es en el que el algoritmo es caucasico y se recorre todo el vector)
+
+// P: (long(v) == 2^n) ^ (0 <= ini < fin < long(v)) ^ (pares == 0)
+bool caucasico(int v[], int ini, int fin, int &pares){
+	bool esCaucasico;
+	
+	if (fin - ini <= 1) {
+		if (v[ini] % 2 == 0)
+			pares++;
+		if (v[fin] % 2 == 0)
+			pares++;
+		esCaucasico = true;
+	}
+	else {
+		int m = (ini + fin) / 2, paresI = 0, paresD = 0;
+		if (!caucasico(v, ini, m, paresI) || !caucasico(v, m+1, fin, paresD))
+			esCaucasico = false;
+		else {
+			pares = paresI + paresD;
+			if ((paresI - paresD <= 2) && (paresD - paresI <= 2)) // if (abs(paresI - paresD <= 2))
+				esCaucasico = true;
+			else
+				esCaucasico = false;
+		}
+	}	
+	
+	return esCaucasico;
+}
+// Q: esCaucasico = (ParaTodo w : ini <= w <= fin : (#u : ini <= u <= fin/2 : v[u]%2 == 0) ^ (#x : fin/2 <= x <= fin : v[x]%2 == 0) ^ (abs(u-x) <= 2))
+
+
+
+
+3) flipas!! :) jajaja
+
+

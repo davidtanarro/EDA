@@ -1,0 +1,96 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+//
+// Problema 1 (valor maximo sumando m sucesivos)
+//
+
+
+// P : n = long(v), y s = suma w : 0<=w<m : v[w]
+int sucesivos(int v[], int n, int m, int s) {
+    int mejor = s; // suma de los m primeros
+
+    // I :  mejor = max u : 0<=u<i-m : ( suma w : u<=w<u+m : v[w] ), 
+    //            y s = suma z : i<=z<i+m : v[z]
+    for (int i=0; i<n-m; i++) {
+        s += v[i+m] - v[i]; // incorpora el nuevo y descarta el viejo
+        if (s > mejor) {
+            mejor = s;
+        }
+    }
+    return mejor;    
+}
+// Q: mejor = max u : 0<=u<n-m : ( suma w : u<=w<u+m : v[w] )
+
+//
+// Problema 2 (vector caucasico)
+//
+
+bool caucasico(int v[], int lo, int hi, int &pares){
+    // caso base
+    if (hi-lo == 1) {
+        if (v[lo] % 2 == 0) pares ++;
+        return true;
+    } else {
+        int m = (hi+lo)/2, paresI=0, paresD=0;
+        if ( ! caucasico(v, lo, m, paresI) || ! caucasico(v, m, hi, paresD)) {
+            return false;
+        } else {
+            pares = paresI+paresD;
+            return abs(paresI - paresD) <= 2; // equivalente: (pI-pD<=2) && (pD-pI<=2)
+        }
+    }
+}
+// complejidad: O(n): cada elemento se mira una unica vez
+
+//
+// Problema 3 (festival al aire libre)
+//
+
+const int AMAX = 10; // maximo de nElegidos
+
+struct Cartel {    
+    int elegidos[AMAX]      // artistas elegidos en este cartel
+    int nElegidos = 0;      // cuántos artistas válidos contiene 'elegidos'
+    int beneficio = 0;      // beneficio total de este cartel
+    bool esSolParcial(Odios &o) {
+        int ultimo = elegidos[nElegidos-1];
+        // si artista repe o odia o es odiado por artistas ya elegidos, mala solucion
+        for (int i=0; i<nElegidos-1; i++) {            
+            if (elegidos[i] == ultimo ||
+                o.odios[elegidos[i]][ultimo] || o.odios[ultimo][elegidos[i]]) {
+                return false;
+            }
+        }
+        return true;
+    }
+    bool esSolucion(Odios &o) {
+        return nElegidos == o.nArtistas;
+    }
+};
+
+struct Odios {
+    bool odios[AMAX][AMAX];         // quién odia a quién 
+    int beneficiosPorArtista[AMAX]; // beneficios que produce cada artista
+    int nArtistas;                  // numero de artistas
+}   
+
+void planifica(Cartel &c, Odios &o, Cartel &mejor) {
+    for (int i=0; i<o.nArtistas; i++) {
+        c.artistas[c.nElegidos++] = i;
+        c.beneficio += o.beneficiosPorArtista[i];
+        if (c.esSolParcial(o)) {
+            if (c.esSolucion(s)) {
+                if (mejor.beneficio < c.beneficio) {
+                    mejor = c; // con structs, hace una copia campo-a-campo
+                }
+            } else {
+                planifica(c, o, mejor);
+            }
+        }
+        // deja la solucion como estaba, para probar con el siguient artista
+        c.beneficio -= o.beneficiosPorArtista[i];
+        c.nElegidos --;        
+    }
+}

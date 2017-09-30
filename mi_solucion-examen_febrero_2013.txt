@@ -1,0 +1,133 @@
+1)
+	Coste del algoritmo iterativo dado un vector de unos y ceros: O(n)
+	Razon: En el peor caso tiene que ser lineal
+	
+#include <iostream>
+
+using namespace std;
+
+const int TAM = 50;
+
+bool unosyceros(int v[], int n);
+bool secuenciaUnos(int v[], int &i, int n);
+bool secuenciaCeros(int v[], int &i, int n);
+
+int main(){
+	int numCasos, numDatos, p = -1;
+	int v[TAM];
+	bool existe;
+
+	cout << "Numero de casos: ";
+	cin >> numCasos;
+	for (int i = 0; i < numCasos; i++) {
+		existe = false;
+		cout << "  Numero de datos: ";
+		cin >> numDatos;
+		for (int j = 0; j < numDatos; j++)
+			cin >> v[j];
+		existe = unosyceros(v, numDatos);
+		if (existe)
+			cout << "Si" << endl;
+		else
+			cout << "No" << endl;
+	}
+
+	return 0;
+}
+
+// P:  n >= 0
+bool unosyceros(int v[], int n) {
+	bool correcto = false;
+	int i = 0;
+	
+	if (n > 0) {
+		if (secuenciaUnos(v, i, n))
+			correcto = true;
+		else if (secuenciaCeros(v, i, n))
+			correcto = true;
+		else
+			correcto = false;
+	}
+
+	return correcto;
+}
+// Q: correcto = ParaTodo w : 0 <= w < n : v[w] == 1 || v[w] == 0 || (ParaTodo p,q : 0 <= p < q < n : v[p] == 1 ^ v[q] == 0)
+
+// P: i < n
+bool secuenciaUnos(int v[], int &i, int n) {
+	bool todoUnos = true;
+
+	// I: todoUnos = ParaTodo w : 0 <= w < i : v[w] == 1
+	while (i < n && todoUnos)
+		if (v[i] == 1)
+			i++;
+		else
+			todoUnos = false;
+
+	return todoUnos;
+}
+// Q: todoUnos = ParaTodo w : 0 <= w < n : v[w] == 1
+
+// P: i < n
+bool secuenciaCeros(int v[], int &i, int n) {
+	bool todoCeros = true;
+
+	// I: todoCeros = ParaTodo w : 0 <= w < i : v[w] == 0
+	while (i < n && todoCeros)
+		if (v[i] == 0)
+			i++;
+		else
+			todoCeros = false;
+
+	return todoCeros;
+}
+// Q: todoCeros = ParaTodo w : 0 <= w < n : v[w] == 0
+
+
+
+2)
+	Coste del algoritmo recursivo dado un vector: O(n)
+	Razon: En el peor caso es lineal
+#include <iostream>
+
+using namespace std;
+
+const int TAM = 50;
+
+void histograma(int v[], int w[], int i, int fin, int suma);
+
+int main(){
+	int numCasos, numDatos;
+	int v[TAM], w[TAM];
+
+	cout << "Numero de casos: ";
+	cin >> numCasos;
+	for (int i = 0; i < numCasos; i++) {
+		cout << "  Numero de datos: ";
+		cin >> numDatos;
+		for (int j = 0; j < numDatos; j++)
+			cin >> v[j];
+		histograma(v, w, 0, numDatos - 1, 0);
+
+		// Muestra w[]
+		cout << "w[ ] contiene: " << endl;
+		for (int j = 0; j < numDatos; j++)
+			cout << w[j] << " ";
+		cout << endl;
+	}
+
+	return 0;
+}
+
+// P: (0 <= i <= fin < n) ^ (suma >= 0)
+void histograma(int v[], int w[], int i, int fin, int suma) {
+	if (i <= fin) {
+		w[i] = suma + v[i];
+		histograma(v, w, i+1, fin, w[i]);
+	}
+}
+// Q: ParaTodo k : 0 <= k < n : Sumatorio v[k] = w[k]
+
+
+
+3) Tema 7 - TADs
